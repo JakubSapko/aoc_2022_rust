@@ -22,7 +22,7 @@ fn main() {
                         if !line.is_empty() {
                             temp = temp + line.parse::<i32>().unwrap();
                         } else {
-                            if (output.iter().any(|&x| temp > x)) {
+                            if output.iter().any(|&x| temp > x) {
                                 output.sort();
                                 output[0] = temp;
                             }
