@@ -11,16 +11,19 @@ where
 }
 
 fn determine_score(line: &str) -> i32 {
+    // X means you need to lose, Y means you need to end the round in a draw, and Z means you need to win.
+    // A(1) - rock, B(2) - paper, C(3) - scissors
+    // lost - 0, draw - 3, win - 6
     match line {
-        "AY" => return 6 + 2,
-        "BZ" => return 6 + 3,
-        "CX" => return 6 + 1,
-        "AX" => return 3 + 1,
-        "BY" => return 3 + 2,
-        "CZ" => return 3 + 3,
-        "AZ" => return 0 + 3,
-        "BX" => return 0 + 1,
-        "CY" => return 0 + 2,
+        "AY" => return 1 + 3,
+        "AZ" => return 2 + 6,
+        "AX" => return 3 + 0,
+        "BY" => return 2 + 3,
+        "BZ" => return 3 + 6,
+        "BX" => return 1 + 0,
+        "CY" => return 3 + 3,
+        "CZ" => return 1 + 6,
+        "CX" => return 2 + 0,
         _ => return 0,
     };
 }
