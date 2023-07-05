@@ -11,75 +11,40 @@ where
     Ok(io::BufReader::new(file).lines())
 }
 
-fn find_the_same_char(backpack: &Result<String, std::io::Error>) -> char {
-    let backpack = backpack.as_ref().unwrap();
-    let backpack_length = backpack.len();
-    let (first, last) = backpack.split_at(backpack_length / 2);
-    let mut found_char = ' ';
-    for (l) in first.chars() {
-        for (r) in last.chars() {
-            if l == r {
-                found_char = l;
-            }
-        }
+fn check_for_containing(tupl: (String, String)) -> bool {
+    let (first, second) = tupl;
+    let first_range = first.split('-').collect_tuple::<(&str, &str)>().unwrap();
+    let second_range = second.split('-').collect_tuple::<(&str, &str)>().unwrap();
+    let first_min = first_range.0.parse::<i32>().unwrap();
+    let first_max = first_range.1.parse::<i32>().unwrap();
+    let second_min = second_range.0.parse::<i32>().unwrap();
+    let second_max = second_range.1.parse::<i32>().unwrap();
+    let first_contains_second = first_min <= second_min && first_max >= second_max;
+    let second_contains_first = second_min <= first_min && second_max >= first_max;
+    if first_contains_second || second_contains_first {
+        // println!("{} contains {}", first, second);
+        return true;
     }
-    found_char
+    return false;
 }
-
-fn backpack_to_int(found_item: char) -> i32 {
-    match found_item as u8 {
-        b'a'..=b'z' => (found_item as usize - b'a' as usize + 1)
-            .try_into()
-            .unwrap(),
-        b'A'..=b'Z' => (found_item as usize - b'A' as usize + 27)
-            .try_into()
-            .unwrap(),
-        _ => 0,
-    }
-}
-
-fn find_the_same_char_in_tuple(tup: (&str, &str, &str)) -> char {
-    let (first, second, third) = tup;
-    let mut found_char = ' ';
-    for (l) in first.chars() {
-        for (r) in second.chars() {
-            for (t) in third.chars() {
-                if l == r && r == t {
-                    found_char = l;
-                }
-            }
-        }
-    }
-
-    found_char
-}
-
 fn main() {
-    let file = read_lines("elves_backpacks.txt");
+    let file = read_lines("elves_cleaning_pairs.txt");
     match file {
-        Ok(file) => {
-            let lines = file.collect::<Vec<_>>();
-
-            let d1 = lines
-                .iter()
-                .map(|line| find_the_same_char(line))
-                .map(|line| backpack_to_int(line));
-
-            let lines_as_tuple_of_threes = lines
-                .iter()
-                .map(|line| line.as_ref().unwrap())
+        Ok(lines) => {
+            let pairs = lines
+                .map(|line| line.unwrap())
+                .map(|line: String| {
+                    let parts: Vec<&str> = line.split(',').collect();
+                    (parts[0].to_owned(), parts[1].to_owned())
+                })
+                .map(|tuple| check_for_containing(tuple))
+                .filter(|&value| value)
                 .collect::<Vec<_>>()
-                .chunks_exact(3)
-                .map(|chunk| (chunk[0].as_str(), chunk[1].as_str(), chunk[2].as_str()))
-                .map(|chunk| find_the_same_char_in_tuple(chunk))
-                .map(|line| backpack_to_int(line))
-                .collect::<Vec<_>>();
-
-            println!("{:?}", d1.sum::<i32>());
-            println!("{:?}", lines_as_tuple_of_threes.iter().sum::<i32>());
+                .len();
+            println!("{} pairs contain each other", pairs);
         }
-        Err(_) => {
-            println!("error")
+        Err(err) => {
+            println!("Error reading file: {}", err)
         }
     }
 }
