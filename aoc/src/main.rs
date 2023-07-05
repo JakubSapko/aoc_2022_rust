@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
@@ -36,16 +37,46 @@ fn backpack_to_int(found_item: char) -> i32 {
         _ => 0,
     }
 }
+
+fn find_the_same_char_in_tuple(tup: (&str, &str, &str)) -> char {
+    let (first, second, third) = tup;
+    let mut found_char = ' ';
+    for (l) in first.chars() {
+        for (r) in second.chars() {
+            for (t) in third.chars() {
+                if l == r && r == t {
+                    found_char = l;
+                }
+            }
+        }
+    }
+
+    found_char
+}
+
 fn main() {
     let file = read_lines("elves_backpacks.txt");
     match file {
         Ok(file) => {
             let lines = file.collect::<Vec<_>>();
+
             let d1 = lines
                 .iter()
                 .map(|line| find_the_same_char(line))
                 .map(|line| backpack_to_int(line));
+
+            let lines_as_tuple_of_threes = lines
+                .iter()
+                .map(|line| line.as_ref().unwrap())
+                .collect::<Vec<_>>()
+                .chunks_exact(3)
+                .map(|chunk| (chunk[0].as_str(), chunk[1].as_str(), chunk[2].as_str()))
+                .map(|chunk| find_the_same_char_in_tuple(chunk))
+                .map(|line| backpack_to_int(line))
+                .collect::<Vec<_>>();
+
             println!("{:?}", d1.sum::<i32>());
+            println!("{:?}", lines_as_tuple_of_threes.iter().sum::<i32>());
         }
         Err(_) => {
             println!("error")
