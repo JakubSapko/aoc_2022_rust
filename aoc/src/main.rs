@@ -1,76 +1,50 @@
 use itertools::Itertools;
-use std::fs::File;
-use std::io::{self, BufRead};
-use std::path::Path;
 
-fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where
-    P: AsRef<Path>,
-{
-    let file = File::open(filename)?;
-    Ok(io::BufReader::new(file).lines())
+fn five_one(mut stacks: Vec<Vec<char>>, operations: &Vec<(usize, usize, usize)>) -> String {
+    for &(count, from, to) in operations {
+        for _ in 0..count {
+            let item = stacks[from - 1].pop().unwrap();
+            stacks[to - 1].push(item);
+        }
+    }
+    stacks.iter().map(|stack| stack.last().unwrap()).join("")
 }
 
-fn check_for_containing(tupl: (String, String)) -> bool {
-    let (first, second) = tupl;
-    let first_range = first.split('-').collect_tuple::<(&str, &str)>().unwrap();
-    let second_range = second.split('-').collect_tuple::<(&str, &str)>().unwrap();
-    let first_min = first_range.0.parse::<i32>().unwrap();
-    let first_max = first_range.1.parse::<i32>().unwrap();
-    let second_min = second_range.0.parse::<i32>().unwrap();
-    let second_max = second_range.1.parse::<i32>().unwrap();
-    let first_contains_second = first_min <= second_min && first_max >= second_max;
-    let second_contains_first = second_min <= first_min && second_max >= first_max;
-    if first_contains_second || second_contains_first {
-        return true;
+fn five_two(mut stacks: Vec<Vec<char>>, operations: &Vec<(usize, usize, usize)>) -> String {
+    for &(count, from, to) in operations {
+        let to_prolong = stacks[to - 1].len() + count;
+        stacks[to - 1].resize(to_prolong, ' ');
+        for i in 0..count {
+            let item = stacks[from - 1].pop().unwrap();
+            stacks[to - 1][to_prolong - 1 - i] = item;
+        }
     }
-    return false;
-}
-
-fn check_for_overlapping(tupl: (String, String)) -> bool {
-    let (first, second) = tupl;
-    let first_range = first.split('-').collect_tuple::<(&str, &str)>().unwrap();
-    let second_range = second.split('-').collect_tuple::<(&str, &str)>().unwrap();
-    let first_min = first_range.0.parse::<i32>().unwrap();
-    let first_max = first_range.1.parse::<i32>().unwrap();
-    let second_min = second_range.0.parse::<i32>().unwrap();
-    let second_max = second_range.1.parse::<i32>().unwrap();
-    let second_overlaps_first = second_min <= first_max && second_max >= first_min;
-    let first_overlaps_second = first_min <= second_max && first_max >= second_min;
-    if first_overlaps_second || second_overlaps_first {
-        return true;
-    }
-    return false;
+    stacks.iter().map(|stack| stack.last().unwrap()).join("")
 }
 fn main() {
-    let file = read_lines("elves_cleaning_pairs.txt");
-    match file {
-        Ok(lines) => {
-            // let pairs = lines
-            //     .map(|line| line.unwrap())
-            //     .map(|line: String| {
-            //         let parts: Vec<&str> = line.split(',').collect();
-            //         (parts[0].to_owned(), parts[1].to_owned())
-            //     })
-            //     .map(|tuple| check_for_containing(tuple))
-            //     .filter(|&value| value)
-            //     .collect::<Vec<_>>()
-            //     .len();
-            let overlaps = lines
-                .map(|line| line.unwrap())
-                .map(|line: String| {
-                    let parts: Vec<&str> = line.split(',').collect();
-                    (parts[0].to_owned(), parts[1].to_owned())
-                })
-                .map(|tuple| check_for_overlapping(tuple))
-                .filter(|&value| value)
-                .collect::<Vec<_>>()
-                .len();
-            // println!("{} pairs contain each other", pairs);
-            println!("{} pairs overlap", overlaps);
-        }
-        Err(err) => {
-            println!("Error reading file: {}", err)
+    let file = include_str!("stacks.txt");
+    let (boxes, operations) = file.split_once("\n\n").unwrap();
+    let mut stacks: Vec<Vec<char>> = vec![vec![]; 9];
+    for line in boxes.lines().rev().skip(1).map(str::as_bytes) {
+        for i in 0..stacks.len() {
+            let character = line[i * 4 + 1];
+            if character.is_ascii_alphabetic() {
+                stacks[i].push(character as char);
+            }
         }
     }
+    let operations = operations
+        .lines()
+        .map(|line| {
+            line.split_whitespace()
+                .filter_map(|op| op.parse::<usize>().ok())
+                .collect_tuple::<(usize, usize, usize)>()
+                .unwrap()
+        })
+        .collect::<Vec<_>>();
+
+    let fo = five_one(stacks.clone(), &operations);
+    let ft = five_two(stacks, &operations);
+    println!("{}", fo);
+    println!("{}", ft);
 }
